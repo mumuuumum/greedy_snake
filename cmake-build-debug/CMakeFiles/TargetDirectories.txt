@@ -1,0 +1,5 @@
+E:/NJU/project_1/cmake-build-debug/CMakeFiles/tipFromAssistance.dir
+E:/NJU/project_1/cmake-build-debug/CMakeFiles/fighter.dir
+E:/NJU/project_1/cmake-build-debug/CMakeFiles/tmp.dir
+E:/NJU/project_1/cmake-build-debug/CMakeFiles/edit_cache.dir
+E:/NJU/project_1/cmake-build-debug/CMakeFiles/rebuild_cache.dir

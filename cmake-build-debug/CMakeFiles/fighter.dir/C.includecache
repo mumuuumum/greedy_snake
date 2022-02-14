@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+E:/NJU/project_1/fighter.c
+windows.h
+-
+conio.h
+-
+time.h
+-
+stdio.h
+-
+setjmp.h
+-
+

@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+E:/NJU/project_1/Picture/Snake.c
+SDL2/SDL.h
+E:/NJU/project_1/Picture/SDL2/SDL.h
+SDL2/SDL_image.h
+E:/NJU/project_1/Picture/SDL2/SDL_image.h
+SDL2/SDL_ttf.h
+E:/NJU/project_1/Picture/SDL2/SDL_ttf.h
+stdio.h
+-
+windows.h
+-
+conio.h
+-
+time.h
+-
+stdio.h
+-
+setjmp.h
+-
+

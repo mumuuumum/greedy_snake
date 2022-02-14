@@ -1,0 +1,4 @@
+E:/NJU/project_1/Picture/cmake-build-debug/CMakeFiles/Snake.dir
+E:/NJU/project_1/Picture/cmake-build-debug/CMakeFiles/tmp.dir
+E:/NJU/project_1/Picture/cmake-build-debug/CMakeFiles/edit_cache.dir
+E:/NJU/project_1/Picture/cmake-build-debug/CMakeFiles/rebuild_cache.dir

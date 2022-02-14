@@ -1,0 +1,370 @@
+#include <windows.h>
+#include <conio.h>
+#include <time.h>
+#include <stdio.h>
+#include <math.h>
+#include <setjmp.h>
+//
+#define VEBORDER '|'                 //竖直边界 Ve即vetical即垂直
+#define LEBORDER '-'                 //水平边界 Le即level即水平
+#define WIDTH 120                     //框的宽
+#define HIGHT 29                     //框的高
+#define INITIALSNAKELEN 3            //蛇最初的长度
+#define MAXSNAKELEN 20               //蛇最大的长度
+#define HEAD '@'                     //蛇头
+#define BODY '*'                     //蛇身
+#define FOOD '$'                     //食物
+#define INITIALSPEED 300             //初始速度
+//
+int lefood = 0;                                                               //食物横坐标
+int vefood = 0;                                                               //食物纵坐标
+int ConLen = INITIALSNAKELEN;                                                 //蛇当前的长度
+int LeSnake [MAXSNAKELEN] = {(WIDTH - 1) / 3,0,0};               //蛇头与蛇身的横坐标
+int VeSnake [MAXSNAKELEN] = {(HIGHT - 1) / 3,0,0};               //蛇头与蛇身的纵坐标
+char wsad ;                                                              //记录用户敲击的键
+char lswsad ;                                                            //记录用户上次敲击的键
+int foodneeded ;                                                           //1表示被需要
+int score ;                                                                //得分
+int speed ;                                                //游戏速度
+char tmpt ;
+jmp_buf start;
+void WelcomeInterface ();                                                     //欢迎界面
+HANDLE consoleHandle;
+//
+void Speeder ();                                                              //三轮跑的很快
+void gotoXY(int x, int y);                                                    //光标移动
+void CreatMap ();                                                             //初始制作地图边缘
+void DramaticScore ();
+void CreatFood ();                                                            //制作食物
+int CheckFood (int le,int ve);                                                //检查食物出现的位置是否合理（食物出现在蛇身、头处）
+void BeginSnake ();                                                           //初始制作蛇
+void MoveSnake ();                                                            //蛇的后续动态 （含蛇吃食物后的动作）
+int Result ();                                                                //当前一局游戏是否失败的判断 1表示失败
+//
+int main () {
+    CONSOLE_CURSOR_INFO cci; // 光标信息
+    cci.dwSize = 0;
+    cci.bVisible = FALSE; // 不可见
+    SetConsoleCursorInfo(consoleHandle, &cci);
+    setjmp(start);
+    wsad = 'a';                                                              //记录用户敲击的键
+    lswsad = '0';                                                            //记录用户上次敲击的键
+    foodneeded = 1;                                                           //1表示被需要
+    score = 0;                                                                //得分
+    speed = INITIALSPEED - 10;                                                //游戏速度
+    tmpt = 0;
+    CreatMap ();
+    DramaticScore();
+    WelcomeInterface();
+    system("cls");
+    CreatMap ();
+    BeginSnake ();
+
+    while (1) {
+        if (foodneeded) {
+            CreatFood();
+            foodneeded = 0;
+            DramaticScore();
+        }
+        CONSOLE_CURSOR_INFO cci; // 光标信息
+        cci.dwSize = 0;
+        cci.bVisible = FALSE; // 不可见
+        MoveSnake();
+        Sleep(speed);
+        if (Result()) {
+            system("cls");
+            printf("%d\n",score);
+            printf("You have lost!");
+            break;
+        }
+    }
+    cci.bVisible = TRUE; // 可见
+    SetConsoleCursorInfo(consoleHandle, &cci);
+    system("pause");
+
+
+
+    return 0;
+}
+//
+void gotoXY(int x, int y) {
+    COORD coord = {x, y};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+//
+void CreatMap () {                                    //制造初始地图框架
+//第0行带边角
+    gotoXY(0, 2);
+    putchar('+');
+    for (int i = 1; i < WIDTH - 1; i++) {
+        gotoXY(i, 2);
+        putchar(LEBORDER);
+    }
+    gotoXY(WIDTH - 1,2);
+    putchar('+');
+//最后一行带边角
+    gotoXY(0, HIGHT + 1);
+    putchar('+');
+    for (int i = 1; i < WIDTH - 1 ; i++) {
+        gotoXY(i, HIGHT + 1);
+        putchar(LEBORDER);
+    }
+    gotoXY(WIDTH - 1, HIGHT + 1);
+    putchar('+');
+//第0列无边角
+    for (int i = 3; i < HIGHT + 1; i++) {
+        gotoXY(0, i);
+        putchar(VEBORDER);
+    }
+//最后一列无边角
+    for (int i = 3; i < HIGHT + 1; i++) {
+        gotoXY(WIDTH - 1, i);
+        putchar(VEBORDER);
+    }
+}
+//
+void Title () {
+    gotoXY((WIDTH - 1) / 2 -2,0);
+    printf("Snake");
+}
+//
+void FunctionKey () {
+    gotoXY(WIDTH - 31,1);
+    printf("return to mean:r pause:p quit:q");
+}
+//
+void DramaticScore () {
+    gotoXY(0,1);
+    printf("Score:");
+    gotoXY(6,1);
+    printf("%d",score);
+}
+//
+void CreatFood () {
+    srand(time(NULL));
+    lefood = rand() % (WIDTH - 1);
+    vefood = rand() % (HIGHT - 1) + 2;
+    while (CheckFood(lefood,vefood)) {
+        lefood = rand() % (WIDTH - 1);
+        vefood = rand() % (HIGHT - 1) + 2;
+    }
+
+    gotoXY(lefood,vefood);
+    putchar(FOOD);
+}
+//
+int CheckFood (int le,int ve) {
+    for (int i = 0;i < ConLen;i++) {
+        if (le == LeSnake [i] && ve == VeSnake [i]) {
+            return 1;
+        }
+    }
+    if (le == WIDTH - 1 || ve == HIGHT + 2 || le == 0 || ve == 2) {
+        return 1;
+    }
+    return 0;
+}
+//
+void BeginSnake () {
+    gotoXY(LeSnake [0],VeSnake [0]);
+    putchar(HEAD);
+    for (int i = 1;i < INITIALSNAKELEN;i++) {
+        LeSnake [i] = LeSnake [i - 1] + 1;
+        VeSnake [i] = VeSnake [i - 1];
+        gotoXY(LeSnake [i],VeSnake [i]);
+        putchar(BODY);
+    }
+}
+//
+void MoveSnake () {
+    //tmp有保存上一个状态的作用，具体的就是当用户输入非wsad等无效的键，或者计划使用如“蛇头向上时按下s咬自己”的不合理操作时，tmp辅助程序转
+    //回什么键都没按的情况
+    char tmp = 0;
+    //监听键盘
+    if (kbhit()) {
+        tmpt = tmp;
+        tmp = lswsad;
+        lswsad = wsad;
+        wsad = getch();
+    }
+    //移动蛇身，后者的下一个坐标是前者现在的坐标，当蛇移动后原来空出的位置用‘ ’覆盖
+    gotoXY(LeSnake [ConLen - 1],VeSnake [ConLen - 1]);
+    putchar(' ');
+    int LaFiLe = LeSnake [ConLen - 1];
+    int LaFiVe = VeSnake [ConLen - 1];
+    for (int i = ConLen - 1;i > 0;i--) {
+        LeSnake [i] = LeSnake [i - 1];
+        VeSnake [i] = VeSnake [i - 1];
+        gotoXY(LeSnake [i],VeSnake [i]);
+        putchar(BODY);
+    }
+    //头部的情况：
+    switch (wsad) {
+        case 'r':
+            system("cls");
+            longjmp(start,1);
+        case 'q':
+            wsad = lswsad;
+            lswsad = tmp;
+            tmp = tmpt;
+            gotoXY((WIDTH - 1) / 2 - 32,1);
+            printf("Press 'q' again to leave,press any other key to continue");
+            char choice = getch();
+            if (choice == 'q') {
+                exit(0);
+            }
+            gotoXY((WIDTH - 1) / 2 - 32,1);
+            printf("                                                        ");
+            break;
+        case 'p':
+            wsad = lswsad;
+            lswsad = tmp;
+            tmp = tmpt;
+            gotoXY((WIDTH - 1) / 2 -16,1);
+            printf("Press any key to continue");
+            while (getch()) {
+                gotoXY((WIDTH - 1) / 2 - 16,1);
+                printf("                         ");
+                break;
+            }
+            break;
+        case 'w':
+            if (lswsad != 's') {
+                VeSnake [0]--;
+                break;
+            } else {
+                wsad = lswsad;
+                lswsad = tmp;
+                VeSnake [0]++;
+                break;
+            }
+        case 's':
+            if (lswsad != 'w') {
+                VeSnake [0]++;
+                break;
+            } else {
+                wsad = lswsad;
+                lswsad = tmp;
+                VeSnake [0]--;
+                break;
+            }
+        case 'a':
+            if (lswsad != 'd') {
+                LeSnake [0]--;
+                break;
+            } else {
+                wsad = lswsad;
+                lswsad = tmp;
+                LeSnake [0]++;
+                break;
+            }
+        case 'd':
+            if (lswsad != 'a') {
+                LeSnake [0]++;
+                break;
+            } else {
+                wsad = lswsad;
+                lswsad = tmp;
+                LeSnake [0]--;
+                break;
+            }
+        default:
+            wsad = lswsad;
+            lswsad = tmp;
+            switch (wsad) {
+                case 'w':
+                    if (lswsad != 's') {
+                        VeSnake[0]--;
+                        break;
+                    } else {
+                        wsad = lswsad;
+                        lswsad = tmp;
+                        break;
+                    }
+                case 's':
+                    if (lswsad != 'w') {
+                        VeSnake[0]++;
+                        break;
+                    } else {
+                        wsad = lswsad;
+                        lswsad = tmp;
+                        break;
+                    }
+                case 'a':
+                    if (lswsad != 'd') {
+                        LeSnake[0]--;
+                        break;
+                    } else {
+                        wsad = lswsad;
+                        lswsad = tmp;
+                        break;
+                    }
+                case 'd':
+                    if (lswsad != 'a') {
+                        LeSnake[0]++;
+                        break;
+                    } else {
+                        wsad = lswsad;
+                        lswsad = tmp;
+                        break;
+                    }
+            }
+    }
+    gotoXY(LeSnake [0],VeSnake [0]);
+    putchar(HEAD);
+    if (LeSnake [0] == lefood && VeSnake [0] == vefood) {
+        foodneeded = 1;
+        score++;
+        Speeder();
+        if (ConLen != MAXSNAKELEN) {
+            ConLen++;
+            LeSnake [ConLen - 1] = LaFiLe;
+            VeSnake [ConLen - 1] = LaFiVe;
+            gotoXY(LeSnake [ConLen - 1],VeSnake [ConLen - 1]);
+            putchar(BODY);
+        }
+    }
+}
+//
+int Result () {
+    for (int i = 2;i < ConLen;i++) {
+        if (LeSnake [0] == LeSnake [i] && VeSnake [0] == VeSnake [i]) {
+            return 1;
+        }
+    }
+    if (VeSnake [0] == 2 || VeSnake [0] == HIGHT + 1) {
+        return 1;
+    }
+    if (LeSnake [0] == 0 || LeSnake [0] == WIDTH - 1) {
+        return 1;
+    }
+    return 0;
+}
+//
+void Speeder () {
+    speed = INITIALSPEED - 2 * atan(INITIALSPEED - speed);
+}
+//
+void WelcomeInterface () {
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 - 3);
+    printf("Welcome to snake game !");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 - 2);
+    printf("Make sure your keyboard is in lowercase !");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 - 1);
+    printf("E means easy");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2);
+    printf("M means medium");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 + 1);
+    printf("D means difficult");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 + 2);
+    printf("Please start the game with the lowercase initials of difficulty");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 + 3);
+    printf("If you didn't press according to our rules,the game would't start");
+    gotoXY((WIDTH - 1) / 3,(HIGHT - 1) / 2 + 4);
+    printf("Please pay attention to words under title,which are tips for you");
+    char tmp = 0;
+    while (tmp != 'e' && tmp != 'm' && tmp != 'd') {
+        tmp = getch();
+    }
+}
+//
